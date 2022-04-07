@@ -1,57 +1,78 @@
-#include <stdlib.h>     /* exit() */
-#include <unistd.h>     /* fork() and getpid() */
-#include <stdio.h>      /* printf() */
-#include <time.h>        /* time() */
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 
-int main(int argc, char **argv) {
-        int pid;
-        int fd[2]; //pipe
-        int producer, consumer;
-        //create pipe
-        if (pipe(fd) < 0) {
-            exit(1); //error
-        }
-        printf("mulai \n");
-        
-        printf("Masukan jumlah yang diproduksi Producer: ");
-        scanf("%d", &producer);
-        printf("Masukan jumlah yang diambil Consumer: ");
+#include<time.h> 
+
+#define ARR_SIZE 50
+#define MAX_VALUE 50
+#define MIN_VALUE 1
+
+int main(int argc, char const *argv[])
+{
+    char inbuf[ARR_SIZE]; // buffer
+    int pid;
+    int fd[2]; // pipe
+    int producer, consumer;
+
+
+    // create pipe
+    if(pipe(fd) < 0){
+        exit(1);
+    }
+    
+                printf("masukan jumlah proses producer: ");
+            scanf("%d", &producer);
+                    printf("masukan jumlah proses consumer: ");
         scanf("%d", &consumer);
-        
-        switch (pid = fork()) {
-        case 0:         /* fork returns 0 ke proses anak */
-                printf("----------\n");
-                /* tutup bagian input dari pipe */
-                close(fd[0]);
-                // tulis ke pipe
-                srand(time(NULL));
-                printf("Producer:\n");
-                int arrIntChild[sizeof(producer)];
-                for (int i = 0; i < producer; i++) {
-                    // generate random number dari 0 sampai 99
-                    arrIntChild[i] = rand() % 100;
-                    printf("Producer menghasilkan: %d\n", arrIntChild[i]);
-                }
-                    write(fd[1], arrIntChild, sizeof(arrIntChild));
-                break;
-        default:        /* fork returns pid ke proses ortu */
-                printf("----------\n");
-                /* tutup bagian output dari pipe */
-                close(fd[1]);
-                int total = 0;
-                // baca yang ditulis child dari pipe
-                printf("Consumer:\n");
-                int arrIntParent[sizeof(consumer)];
-                read(fd[0], arrIntParent, sizeof(arrIntParent));
-                for (int i = 0; i < consumer; i++) {
-                    printf("Consumer mengambil: %d\n", arrIntParent[i]);
-                    total += arrIntParent[i];
-                }
-                printf("Total yang ada didalam buffer: %d\n", total);
-                break;
-        case -1:        /* error */
-                perror("fork");
-                exit(1);
+            if (consumer > producer) consumer = producer;
+
+
+    printf("mulai\n");
+
+    switch (pid = fork())
+    {
+    case 0: // fork return 0 ke proses anak
+        // printf("proses anak\n");
+        // tutup bagian input dari pipe
+        close(fd[0]);
+
+
+        // tulis ke pipe
+        srand(time(NULL));
+        int randomNumberBuffer[sizeof(producer) + 1];
+        for (int i = 0; i < producer; i++)
+        {
+            randomNumberBuffer[i] = (rand() % (MAX_VALUE + 1) - MIN_VALUE + MIN_VALUE);
+            printf("Producer memberikan nilai : %d\n", randomNumberBuffer[i]);
         }
-        exit(0);
+        write(fd[1], randomNumberBuffer, sizeof(randomNumberBuffer));
+
+        
+
+        break;
+    default: // fork return pid ke proses ortu
+
+        // printf("proses ortu\n");
+        // tutup bagian output dari pipe
+        close(fd[1]);
+
+
+        // baca yang ditulis child dari pipe
+        int addChildNumber[sizeof(consumer) + 1];
+
+        read(fd[0], addChildNumber, sizeof(addChildNumber));
+        int jumlahNumber = 0;
+        for (int i = 0; i < consumer; i++)
+        {
+            printf("Consumer mengambil nilai : %d\n", addChildNumber[i]);
+            jumlahNumber += addChildNumber[i];
+        }
+            printf("jumlah number %d\n", jumlahNumber);
+
+        break;
+    
+    }
+    return 0;
 }
