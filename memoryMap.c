@@ -9,18 +9,19 @@
 #define ARR_SIZE 20
 
 int main(int argc, char **argv) {
-        int pid, consumer, producer;
+        int pid, c, p; // deklarasi variabel
+        
+        // memasukkan nilai producer dan consumer
+        printf("Masukkan jumlah proses: \n");
+        printf("producer : ");scanf("%d", &p);
+        printf("consumer: ");scanf("%d",&c);
 
-        printf("mulai \n");
+
         int size = ARR_SIZE * sizeof(int);
-        //buat memory map
         void *addr = mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
         printf("Mapped at %p\n", addr);
         int *shared = addr;
-        printf("Masukan jumlah yang diproduksi Producer: ");
-        scanf("%d", &producer);
-        printf("Masukan jumlah yang diambil Consumer: ");
-        scanf("%d", &consumer);
+
 
         switch (pid = fork()) {
         case 0: /*  proses anak */
@@ -29,7 +30,7 @@ int main(int argc, char **argv) {
                 
                 // mengisi random number kedalam buffer
                 printf("Producer:\n");
-                for (int i = 0; i < producer; i++)
+                for (int i = 0; i < p; i++)
                 {
                     // random number dari 0 sampai 99
                     shared[i] = rand() % 100;
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
                         
                         // mengambil random number dari buffer dan kemudian dijumlahkan
                         printf("Consumer:\n");
-                        for (int i = 0; i < consumer; i++) {
+                        for (int i = 0; i < c; i++) {
                             printf("Consumer mengambil: %d\n", shared[i]);
                             total += shared[i];
                         }
