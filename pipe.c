@@ -1,9 +1,9 @@
-// PIPE
-
 #include <stdlib.h>     /* exit() */
 #include <unistd.h>     /* fork() and getpid() */
 #include <stdio.h>      /* printf() */
 #include <time.h>        /* time() */
+#include <sys/wait.h>   /*wait*/
+#include <errno.h>        /* errno */
 
 int main(int argc, char **argv) {
         int pid;
@@ -38,18 +38,31 @@ int main(int argc, char **argv) {
                 break;
         default:        /* fork returns pid ke proses ortu */
                 printf("----------\n");
-                /* tutup bagian output dari pipe */
-                close(fd[1]);
-                int total = 0;
-                // baca yang ditulis child dari pipe
-                printf("Consumer:\n");
-                int arrIntParent[sizeof(consumer)];
-                read(fd[0], arrIntParent, sizeof(arrIntParent));
-                for (int i = 0; i < consumer; i++) {
-                    printf("Consumer mengambil: %d\n", arrIntParent[i]);
-                    total += arrIntParent[i];
+                int pidWait,status,total=0;
+                /* wait sampai child selesai */
+                while (pidWait = wait(&status)) {   
+                    if (pidWait == pid)  /* child sukses selesai*/
+                        // mengambil random number dari buffer dan kemudian dijumlahkan
+                        close(fd[1]);
+                        // baca yang ditulis child dari pipe
+                        printf("Consumer:\n");
+                        int arrIntParent[sizeof(consumer)];
+                        read(fd[0], arrIntParent, sizeof(arrIntParent));
+                        for (int i = 0; i < consumer; i++) {
+                            printf("Consumer mengambil: %d\n", arrIntParent[i]);
+                            total += arrIntParent[i];
+                        }
+                        break; //keluar dari loop wait
+                    if ((pidWait == -1) && (errno != EINTR)) {
+                        /* ada error*/
+                        perror("waitpid");
+                        exit(1);
+                    }
                 }
                 printf("Total yang ada didalam buffer: %d\n", total);
+                break;
+                /* tutup bagian output dari pipe */
+
                 break;
         case -1:        /* error */
                 perror("fork");
